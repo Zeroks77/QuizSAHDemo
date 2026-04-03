@@ -231,6 +231,7 @@ function buildGameState(quizId, existingCode = generateGameCode()) {
 
 function persistCurrentGame() {
   if (!currentGame) return;
+  currentGame.updatedAt = Date.now();
   GameStore.set(currentGame.code, currentGame);
   ActiveGameStore.set(currentGame.code);
 }
@@ -289,7 +290,7 @@ async function copyPlayerLink() {
 function syncCurrentGameFromStore() {
   if (!currentGame?.code) return;
   const latest = GameStore.get(currentGame.code);
-  if (!latest) return;
+  if (!latest || (currentGame.updatedAt && latest.updatedAt && latest.updatedAt < currentGame.updatedAt)) return;
   currentGame = latest;
   updateHostControls();
 }
@@ -407,7 +408,7 @@ function renderHostResult() {
     </div>`;
 }
 
-function presetQuestion(text, timeLimit, answers, correctIndices = [0]) {
+function presetQuestion(text, timeLimit, answers, correctIndices = 0) {
   const correctList = Array.isArray(correctIndices) ? correctIndices : [correctIndices];
   return {
     id: uuidv4(),
@@ -452,11 +453,9 @@ function getPresetQuizzes() {
 
 function upsertPresetQuiz(preset) {
   const existing = QuizStore.all().find(quiz => quiz.title === preset.title);
-  if (existing) {
-    preset.id = existing.id;
-    preset.createdAt = existing.createdAt;
-  }
-  QuizStore.upsert(preset);
+  QuizStore.upsert(existing
+    ? { ...preset, id: existing.id, createdAt: existing.createdAt }
+    : preset);
 }
 
 function loadPresetQuizzes() {

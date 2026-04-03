@@ -47,6 +47,7 @@ function showMissingGame() {
 
 function saveGameState() {
   if (!currentGame) return;
+  currentGame.updatedAt = Date.now();
   GameStore.set(currentGame.code, currentGame);
   ActiveGameStore.set(currentGame.code);
 }
@@ -144,7 +145,7 @@ function finishQuestion(answerId) {
   }
 
   if (answerId && correctIds.includes(answerId)) {
-    const gained = 100 + Math.max(0, Math.round(Math.max(timeLeft, 0) * 10));
+    const gained = calculateQuestionScore(Math.max(timeLeft, 0));
     score += gained;
     currentGame.currentPlayer.score = score;
     showScorePopup('+' + gained);
@@ -217,7 +218,7 @@ function finishQuiz() {
 
 function showFinal() {
   showScreen('screen-final');
-  const maxScore = quizData.questions.reduce((sum, question) => sum + 100 + ((question.timeLimit || 30) * 10), 0);
+  const maxScore = quizData.questions.reduce((sum, question) => sum + calculateQuestionScore(question.timeLimit || 30), 0);
   const ratio = maxScore ? score / maxScore : 0;
   const icon = ratio >= 0.75 ? '🏆' : ratio >= 0.45 ? '👏' : '✨';
   const message = ratio >= 0.75
