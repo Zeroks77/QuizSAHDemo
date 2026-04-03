@@ -231,7 +231,7 @@ function buildGameState(quizId, existingCode = generateGameCode()) {
 
 function persistCurrentGame() {
   if (!currentGame) return;
-  currentGame.updatedAt = Date.now();
+  currentGame.updatedAt = new Date().toISOString();
   GameStore.set(currentGame.code, currentGame);
   ActiveGameStore.set(currentGame.code);
 }
@@ -272,7 +272,7 @@ function closeStartModal() {
 }
 
 function openPlayerView() {
-  window.open(getPlayerJoinUrl(), '_blank', 'noopener');
+  window.open(getPlayerJoinUrl(), '_blank', 'noopener,noreferrer');
 }
 
 async function copyPlayerLink() {
@@ -290,7 +290,12 @@ async function copyPlayerLink() {
 function syncCurrentGameFromStore() {
   if (!currentGame?.code) return;
   const latest = GameStore.get(currentGame.code);
-  if (!latest || (currentGame.updatedAt && latest.updatedAt && latest.updatedAt < currentGame.updatedAt)) return;
+  if (!latest) return;
+  if (currentGame.updatedAt && latest.updatedAt) {
+    const latestTime = Date.parse(latest.updatedAt);
+    const currentTime = Date.parse(currentGame.updatedAt);
+    if (Number.isFinite(latestTime) && Number.isFinite(currentTime) && latestTime <= currentTime) return;
+  }
   currentGame = latest;
   updateHostControls();
 }

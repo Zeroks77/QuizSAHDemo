@@ -47,7 +47,7 @@ function showMissingGame() {
 
 function saveGameState() {
   if (!currentGame) return;
-  currentGame.updatedAt = Date.now();
+  currentGame.updatedAt = new Date().toISOString();
   GameStore.set(currentGame.code, currentGame);
   ActiveGameStore.set(currentGame.code);
 }
